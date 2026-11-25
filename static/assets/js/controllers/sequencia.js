@@ -1,48 +1,82 @@
-angular.module('deciframeApp').controller('SequenciaController', function($http, $window, ngProgressFactory, $anchorScroll, $location, GENEROS) {
-  var sequencia1 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'Bm', 'cor': '#2E1C74' },
-      { 'acorde': 'G',  'cor': '#2E1C74' },
-      { 'acorde': 'D',  'cor': '#2E1C74' },
-      { 'acorde': 'A',  'cor': '#2E1C74' }
-  ]};
-  var sequencia2 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'C',  'cor': '#2E1C74' },
-      { 'acorde': 'G',  'cor': '#2E1C74' },
-      { 'acorde': 'Am', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' }
-  ]};
-  var sequencia3 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'Gm', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' }
-  ]};
-  var sequencia4 = {
-    'index': 1,
-    'acordes': [
-      { 'acorde': 'C',  'cor': '#2E1C74' },
-      { 'acorde': 'C7', 'cor': '#2E1C74' },
-      { 'acorde': 'F',  'cor': '#2E1C74' },
-      { 'acorde': 'Fm', 'cor': '#2E1C74' }
-  ]};
+angular.module('deciframeApp').controller('SequenciaController', function($http, $window, ngProgressFactory) {
+  var COR_ACORDE = '#2E1C74';
+
+  var paraSequencia = function(item) {
+    return {
+      'index': item.id,
+      'acordes': item.acordes.map(function(acorde) {
+        return { 'acorde': acorde, 'cor': COR_ACORDE };
+      })
+    };
+  };
+
   var vm = this;
   vm.sequenciasFamosas = [];
-  vm.sequenciasFamosas.push(sequencia1);
-  vm.sequenciasFamosas.push(sequencia2);
-  vm.sequenciasFamosas.push(sequencia3);
-  vm.sequenciasFamosas.push(sequencia4);
+  vm.acordesDisponiveis = [];
+  vm.acordeSelecionado = '';
+  vm.novaSequencia = [];
+  vm.erroCadastro = '';
+  vm.carregandoCatalogo = true;
   vm.minhaSequencia = {};
   vm.isSearching = false;
   vm.showSearchResultsCount = false;
-  vm.esfigeSpeech =  "";
+  vm.esfigeSpeech = "";
   vm.musics = [];
-  vm.generos = GENEROS;
+  vm.generos = [];
   vm.meuGenero = "";
   vm.progressbar = ngProgressFactory.createInstance();
+
+  var carregarCatalogo = function() {
+    $http.get('/sequencias')
+      .success(function(data) {
+        vm.sequenciasFamosas = data.map(paraSequencia);
+        vm.carregandoCatalogo = false;
+      })
+      .error(function() {
+        vm.erroCadastro = 'Não foi possível carregar o catálogo.';
+        vm.carregandoCatalogo = false;
+      });
+  };
+
+  $http.get('/acordes').success(function(data) {
+    vm.acordesDisponiveis = data;
+  });
+  $http.get('/generos').success(function(data) {
+    vm.generos = data;
+  });
+  carregarCatalogo();
+
+  vm.adicionarAcorde = function() {
+    var acorde = vm.acordeSelecionado;
+    if (!acorde) {
+      return;
+    }
+    vm.novaSequencia.push({ 'acorde': acorde, 'cor': COR_ACORDE });
+    vm.acordeSelecionado = '';
+  };
+
+  vm.removerUltimoAcorde = function() {
+    vm.novaSequencia.pop();
+  };
+
+  vm.cadastrarSequencia = function() {
+    var acordes = vm.novaSequencia.map(function(item) {
+      return item.acorde;
+    });
+    if (acordes.length === 0) {
+      vm.erroCadastro = 'Escolha ao menos um acorde.';
+      return;
+    }
+    $http.post('/sequencias', { 'acordes': acordes })
+      .success(function() {
+        vm.novaSequencia = [];
+        vm.erroCadastro = '';
+        carregarCatalogo();
+      })
+      .error(function(data) {
+        vm.erroCadastro = (data && data.erro) || 'Ops! Algo errado.';
+      });
+  };
 
   vm.temAcorde = function(acorde) {
     if (vm.minhaSequencia.acordes) {

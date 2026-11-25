@@ -7,6 +7,34 @@
           <df-hex acorde="{{acordeon.acorde}}" acorde-color="{{acordeon.cor}}" acorde-checked="Sequencia.temAcorde(acordeon)" ng-repeat="acordeon in sequencia.acordes"></df-hex>
         </div>
         <br style="clear: both;">
+        <p class="text-center" ng-if="Sequencia.carregandoCatalogo">Carregando catálogo...</p>
+
+        <div class="cadastro-sequencia">
+          <h5 class="text-center">Cadastrar nova sequência</h5>
+          <div class="form-group">
+            <select class="form-control form-control-inverse"
+              ng-options="acorde for acorde in Sequencia.acordesDisponiveis"
+              ng-model="Sequencia.acordeSelecionado">
+              <option value="">-- Acorde --</option>
+            </select>
+          </div>
+          <button class="btn btn-default btn-block"
+            ng-click="Sequencia.adicionarAcorde()"
+            ng-disabled="!Sequencia.acordeSelecionado">Adicionar acorde</button>
+          <div style="margin-top: 10px;">
+            <df-hex acorde="{{acordeon.acorde}}" acorde-color="{{acordeon.cor}}"
+              ng-repeat="acordeon in Sequencia.novaSequencia"></df-hex>
+            <br style="clear: both;">
+          </div>
+          <button class="btn btn-default btn-xs"
+            ng-click="Sequencia.removerUltimoAcorde()"
+            ng-disabled="!Sequencia.novaSequencia.length">Desfazer</button>
+          <button class="btn btn-primary btn-block"
+            ng-click="Sequencia.cadastrarSequencia()"
+            ng-disabled="!Sequencia.novaSequencia.length">Cadastrar sequência</button>
+          <p class="text-danger" ng-if="Sequencia.erroCadastro">{{Sequencia.erroCadastro}}</p>
+        </div>
+
         <button class="search-results-count" ng-if="Sequencia.showSearchResultsCount" ng-click="Sequencia.goToResults()">
           <span class="glyphicon glyphicon-triangle-bottom bounce animated infinite"></span>
           <br>
@@ -23,7 +51,7 @@
               <div class="form-group">
                 <select
                   class="form-control form-control-inverse input-lg"
-                  ng-options="genero for genero in Sequencia.generos | orderBy:'genero'"
+                  ng-options="genero for genero in Sequencia.generos"
                   ng-model="Sequencia.meuGenero"
                   ng-change="Sequencia.pesquisarPorSequencia()">
                   <option value="">-- Gênero --</option>
